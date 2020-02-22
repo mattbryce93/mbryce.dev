@@ -2,7 +2,9 @@ const https = require('https');
 const fs = require('fs');
 const util = require('util');
 
-function promisedRequest(options) {
+const profileName = 'mbryce';
+
+function promisedRequest(options, data = null) {
   return new Promise((resolve, reject) => {
     const req = https.request(options, res => {
       res.setEncoding('utf8');
@@ -20,18 +22,18 @@ function promisedRequest(options) {
     req.on('error', err => {
       reject(err);
     });
-
+    if (data) {
+      req.write(data);
+    }
     req.end();
   });
 }
 
-console.log(apiToken);
 const options = {
   hostname: 'app.terraform.io',
   path: '/api/v2/organizations',
   headers: {
-    'content-type': 'application/vnd.api+json',
-    authorization: 'Bearer <redacted api token'
+    'content-type': 'application/vnd.api+json'
   },
   method: 'GET',
   protocol: 'https:'
@@ -41,6 +43,14 @@ async function updateVariables() {
   const awsCredentials = (
     await util.promisify(fs.readFile)(`${process.env['HOME']}/.aws/credentials`)
   ).toString();
+  const terraformToken = `Bearer ${
+    (await util.promisify(fs.readFile)(`${process.env['HOME']}/.terraformrc`))
+      .toString()
+      .split('=')[1]
+      .split('"')[1]
+  }`;
+  options.headers.authorization = terraformToken;
+  let finalCredentialsJson = {};
   awsCredentials
     .split('[')
     .filter(elements => elements)
@@ -48,8 +58,6 @@ async function updateVariables() {
       usernameAndCredentials = profile.split(']');
       const profileName = usernameAndCredentials[0];
       const profileCredentials = usernameAndCredentials[1];
-      console.log(profileName);
-      console.log(profileCredentials);
       let credentialsObject = {};
       profileCredentials
         .split('\n')
@@ -57,11 +65,18 @@ async function updateVariables() {
         .map(credEntry => {
           const result = {};
           keyAndValue = credEntry.split('=');
-          result[`${keyAndValue[0]}`] = keyAndValue[1];
+          result[
+            `${keyAndValue[0]
+              .toUpperCase()
+              .split(' ')
+              .join('')}`
+          ] = keyAndValue[1].split(' ').join('');
           credentialsObject = { ...credentialsObject, ...result };
         });
-      console.log(credentialsObject);
+
+      finalCredentialsJson[`${profileName}`] = credentialsObject;
     });
+
   return await promisedRequest(options)
     .then(test => {
       const organizationName = test.data[0].id;
@@ -71,7 +86,22 @@ async function updateVariables() {
         options.path = `/api/v2/workspaces/${workspaceId}/vars`;
         return promisedRequest(options).then(workspaceVariables => {
           return workspaceVariables.data.map(workspaceVariable => {
-            console.log(workspaceVariable.attributes.key);
+            if (workspaceVariable.attributes.key === 'AWS_DEFAULT_REGION') {
+              return;
+            } else {
+              options.path = `/api/v2/workspaces/${workspaceId}/vars/${workspaceVariable.id}`;
+              options.method = 'PATCH';
+              const payload = { data: workspaceVariable };
+              payload.data.attributes.value =
+                finalCredentialsJson[`${profileName}`][
+                  `${workspaceVariable.attributes.key}`
+                ];
+              delete payload.data.relationships;
+              delete payload.data.links;
+              promisedRequest(options, JSON.stringify(payload)).then(result => {
+                console.log(result);
+              });
+            }
           });
         });
       });
