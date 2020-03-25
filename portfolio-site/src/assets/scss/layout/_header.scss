@@ -69,10 +69,18 @@
     border: solid _size(border-width) _palette(border);
     border-radius: 100%;
 
-    .icon {
-      &:before {
-        font-size: 2rem;
-      }
+    img {
+      width: 5.5rem;
+      height: 5.5rem;
+      line-height: 5.5rem;
+      border: solid _size(border-width) _palette(border);
+      border-radius: 100%;
+      border-top-width: 1px;
+      border-right-width: 1px;
+      border-bottom-width: 1px;
+      border-left-width: 1px;
+      margin-left: -1px;
+      margin-top: -1px;
     }
   }
 
@@ -222,10 +230,16 @@
       height: 4.75rem;
       line-height: 4.75rem;
 
-      .icon {
-        &:before {
-          font-size: 1.75rem;
-        }
+      img {
+        width: 4.75rem;
+        height: 4.75rem;
+        line-height: 4.75rem;
+        border-top-width: 1px;
+        border-right-width: 1px;
+        border-bottom-width: 1px;
+        border-left-width: 1px;
+        margin-left: -1px;
+        margin-top: -1px;
       }
     }
 
