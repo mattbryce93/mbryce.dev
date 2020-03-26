@@ -115,6 +115,7 @@
       letter-spacing: _font(letter-spacing);
       font-size: 0.8rem;
       line-height: 2;
+      font-weight: bold;
     }
   }
 
@@ -147,6 +148,7 @@
           font-family: _font(family);
           border: none;
           box-shadow: none;
+          font-weight: bold;
 
           &:hover,
           &:focus {
