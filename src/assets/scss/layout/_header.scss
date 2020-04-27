@@ -268,8 +268,8 @@
     nav {
       ul {
         @include vendor('flex-direction', 'column');
-        min-width: 10rem;
         max-width: 100%;
+        align-items: center;
 
         li {
           border-left: 0;
