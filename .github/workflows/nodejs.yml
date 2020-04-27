@@ -3,10 +3,11 @@
 
 name: Build and Deploy
 
-on: 
+on:
   push:
-    [master]
-    
+    branches:
+      - master
+      
   jobs:
     build-and-deploy:
       runs-on: ubuntu-latest
